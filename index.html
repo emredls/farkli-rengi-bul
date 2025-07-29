@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎨 Renkli Kareyi Bul</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      transition: background 0.5s, color 0.3s;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 5px;
+      color: #333;
+    }
+
+    #level, #high-score {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #666;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .square {
+      width: 100px;
+      height: 100px;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease;
+    }
+
+    .square:hover {
+      transform: scale(1.05);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      margin: 5px;
+      background-color: #007acc;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #005fa3;
+    }
+
+    /* Dark Mode */
+    body.dark {
+      background: linear-gradient(135deg, #2c3e50, #34495e);
+      color: #ecf0f1;
+    }
+
+    body.dark h1,
+    body.dark #level,
+    body.dark #high-score {
+      color: #ecf0f1;
+    }
+
+    body.dark .btn {
+      background-color: #2980b9;
+    }
+
+    body.dark .btn:hover {
+      background-color: #1c5981;
+    }
+
+    /* 🔥 Oyun Bitti Paneli */
+    #fail-panel {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .panel-content {
+      background-color: white;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      max-width: 300px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    body.dark .panel-content {
+      background-color: #2c3e50;
+      color: #ecf0f1;
+    }
+
+    .panel-content h2 {
+      margin-bottom: 10px;
+    }
+
+    .panel-content .btn {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 Renkli Kareyi Bul</h1>
+  <div id="level">Seviye: 1</div>
+  <div id="high-score">🏆 En İyi Skor: 1</div>
+  <div class="grid" id="grid"></div>
+  <div>
+    <button class="btn" onclick="startGame()">🔁 Yeniden Başla</button>
+    <button class="btn" onclick="toggleDarkMode()">🌙 Gece Modu</button>
+  </div>
+
+  <!-- Oyun Bitti Paneli -->
+  <div id="fail-panel">
+    <div class="panel-content">
+      <h2>❌ Yanlış Kare!</h2>
+      <p>Skorun: <span id="final-score"></span></p>
+      <button class="btn" onclick="closeFailPanel()">🔁 Yeniden Dene</button>
+    </div>
+  </div>
+
+  <script>
+    const grid = document.getElementById("grid");
+    const levelDisplay = document.getElementById("level");
+    const highScoreDisplay = document.getElementById("high-score");
+    const failPanel = document.getElementById("fail-panel");
+    const finalScore = document.getElementById("final-score");
+
+    let level = 1;
+    let highScore = localStorage.getItem("highScore") || 1;
+
+    function updateHighScore() {
+      if (level > highScore) {
+        highScore = level;
+        localStorage.setItem("highScore", highScore);
+      }
+      highScoreDisplay.textContent = `🏆 En İyi Skor: ${highScore}`;
+    }
+
+    function randomColor() {
+      const r = Math.floor(Math.random() * 200);
+      const g = Math.floor(Math.random() * 200);
+      const b = Math.floor(Math.random() * 200);
+      return { r, g, b };
+    }
+
+    function colorToString(c) {
+      return `rgb(${c.r}, ${c.g}, ${c.b})`;
+    }
+
+    function startGame() {
+      level = 1;
+      generateGrid();
+    }
+
+    function generateGrid() {
+      grid.innerHTML = "";
+      levelDisplay.textContent = "Seviye: " + level;
+      updateHighScore();
+
+      const baseColor = randomColor();
+      const diff = Math.max(5, 50 - level * 2);
+      const specialColor = {
+        r: baseColor.r + diff,
+        g: baseColor.g + diff,
+        b: baseColor.b + diff
+      };
+
+      const correctIndex = Math.floor(Math.random() * 9);
+
+      for (let i = 0; i < 9; i++) {
+        const square = document.createElement("div");
+        square.classList.add("square");
+
+        if (i === correctIndex) {
+          square.style.backgroundColor = colorToString(specialColor);
+          square.addEventListener("click", () => {
+            level++;
+            generateGrid();
+          });
+        } else {
+          square.style.backgroundColor = colorToString(baseColor);
+          square.addEventListener("click", () => {
+            showFailPanel();
+          });
+        }
+
+        grid.appendChild(square);
+      }
+    }
+
+    function showFailPanel() {
+      finalScore.textContent = level;
+      failPanel.style.display = "flex";
+    }
+
+    function closeFailPanel() {
+      failPanel.style.display = "none";
+      startGame();
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark");
+    }
+
+    // Başlangıç
+    startGame();
+    updateHighScore();
+  </script>
+</body>
+</html>
